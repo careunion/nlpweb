@@ -1,0 +1,68 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#########################################################################
+# File Name: topic_judge.py
+# Author: yaojia
+# mail: yaojia@brandbigdata.com
+# Created Time: 2016-04-20 11:13:28
+#########################################################################
+import re
+import math
+import sys
+import jieba
+import jieba.posseg
+
+def Ddata_load():
+    jieba.load_userdict("../topicdat/zz")
+    jieba.load_userdict("../topicdat/sport")
+    jieba.load_userdict("../topicdat/eat")
+    jieba.load_userdict("../topicdat/drug")
+
+def Mmodel_load():
+    trans_dict = {}
+    pos_dict = {}
+    for line in open("topic_trans.model"):
+        infos = line.split("\t")
+        pos1 = infos[0].strip()
+        pos2 = infos[2].strip()
+        num = int(infos[3].strip())
+
+        if not trans_dict.has_key(pos1):
+            trans_dict[pos1] = {}
+        trans_dict[pos1][pos2] = num
+        pos_dict[pos1] = pos_dict.get(pos1, 0) +num
+    return trans_dict, pos_dict
+
+Ddata_load()
+Ttrans_dict, Ppos_dict = Mmodel_load()
+
+def sen_judge(line):
+    line = line.decode("utf-8").strip()
+    pos_list = [list(k)[1] for k in  list(jieba.posseg.cut(line, HMM=False)) ]
+    if len(line) > 15:
+        return 0
+    elif len(line) == 1 and line not in u"嗯啊好恩哦对是哟":
+        return 0
+    elif len(line) == 1:
+        return 1
+    elif len(pos_list) < 2:
+        return 1
+    log1 = 1
+    log2 = 1
+    for i in range(len(pos_list) - 1):
+        _pos1 = pos_list[i]
+        _pos2 = pos_list[i + 1]
+        log1 = log1 * (Ttrans_dict.get(_pos1, {}).get(_pos2, 0) + 1) /10.0
+        log2 = log2 * (Ppos_dict.get(_pos1, 0) + 30) / 10.0
+    p = (math.log(log1) - math.log(log2)) * 1.0/len(line)
+    if p < -1.5:
+        return 0
+    else:
+        return 1, p
+
+if __name__=="__main__":
+    for line in sys.stdin:
+        t = sen_judge(line)
+        if not t:
+            print line.strip(), t
+        
