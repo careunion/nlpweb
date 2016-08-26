@@ -1,0 +1,50 @@
+city 城市
+status1 白天天气
+status2 夜间天气
+figure1 白天天气拼音
+figure2 夜间天气拼音
+direction1 白天风向
+direction2 夜间风向
+power1 白天风力
+power2 夜间风力
+temperature1 白天温度
+temperature2 夜间温度
+ssd 户外指数 
+tgd1 白天体感温度指数
+tgd2 夜间体感温度指数
+zwx 紫外线指数
+ktk 空调指数
+pollution 污染指数
+xcz 洗车指数
+zho 
+diy
+fas
+chy 穿衣指数
+zho_shuoming
+diy_shuoming
+fas_shuoming
+chy_shuoming 穿衣详细说明
+pollution_l 污染简介
+zwx_l 紫外线简介
+ssd_l 户外指数简介
+fas_l
+zho_l
+chy_l 穿衣建议
+ktk_l 空调建议
+xcz_l 洗车建议
+diy_l
+pollution_s 污染说明
+zwx_s 紫外线说明
+ssd_s 户外指数说明
+ktk_s 空调说明
+xcz_s 洗车说明
+gm 感冒指数
+gm_l 感冒易发情况
+gm_s 感冒说明
+yd 运动指数
+yd_l 运动建议
+yd_s 运动说明
+savedate_weather 天气日期
+savedate_life 生活日期
+savedate_zhishu 指数日期
+udatetime
