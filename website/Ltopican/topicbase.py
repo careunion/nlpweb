@@ -18,10 +18,11 @@ from topicslots import *
 from topiccombs import *
 from topiccombs_xiaoi import *
 from slotfuc_xiaoi import *
-from xiaoi_xiaobai_slot import *
+from xiaoi_xiaobai_slot_vr4 import *
 from topiccombs_xiaoiqa import *
-from xiaoi_gdk_slot import *
+from xiaoi_gdk_slot_v3 import *
 from slotfuc_weathercity import *
+from xiaolan_gdk_slot import *
 
 pwd_path = data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".")
 
@@ -63,11 +64,15 @@ class TopicBase:
                 "Slotreputationfind": Slotreputationfind,
                 "Slotdistancefind": Slotdistancefind,
                 "Slotcouponfind": Slotcouponfind,
+                "Slotsearchfind": Slotsearchfind,
+                "Slotremindfind": Slotremindfind,
+                "Slottimefind": Slottimefind,
                 "Combweather": Combweather,
                 "CombNonslotclear": CombNonslotclear,
                 "Combrestruct":Combrestruct,
                 "Combcatg2id": Combcatg2id,
                 "Combxiaoiqa": Combxiaoiqa,
+                "Combbasetopic": Combbasetopic,
                 }
         
         self.ruleLoad()
@@ -108,7 +113,7 @@ class TopicBase:
 
     def twoelementLoad(self, _dict = {}, lines = [], basescore=0.1):
         for line in lines:
-            infos = line.strip().decode("utf-8").split("\t")
+            infos = line.strip().decode("utf-8").split()
             if len(infos) == 2:
                 _dict[infos[0]] = float(infos[1])
             if len(infos) == 1:
@@ -125,6 +130,9 @@ class TopicBase:
         for slot in self.combines:
             if slot in self.slotcomb2dict:
                 self.combfucs.append(self.slotcomb2dict.get(slot))
+        #如果是basedomain，预先添加Combbasetopic
+        if "*" in self.fatherdomains:
+            self.combfucs.append(self.slotcomb2dict.get("Combbasetopic"))
 
     def rulecombine(self, redict):
         _topicword = {}
@@ -202,9 +210,6 @@ class TopicBase:
         difftag = False
         if (not oldslot) and (not newslot):
             return difftag
-        #print "diff-------------------"
-        #print json.dumps(oldslot, ensure_ascii=False)
-        #print json.dumps(newslot, ensure_ascii=False)
 
         oldslotdict = oldslot[0]
         for newslotdict in newslot:
@@ -213,11 +218,10 @@ class TopicBase:
                     oldv = oldslotdict.get(k, "")
                     if oldv != v:
                         difftag = True
-        #print difftag
         return difftag
 
     #根据topic识别的结果，进行相应结果重组（以及combine）
-    def topicdict(self, queryobj, domain="", intent="", scores=0.0, slots=[]):
+    def topicdict(self, queryobj, domain="", intent="", scores=0.0, slots=[], contexts = [[]]):
         _dict = {}
         _dict["Domain"] = domain
         _dict["Intent"] = intent
@@ -232,12 +236,10 @@ class TopicBase:
 
         #对所有的comb函数进行处理
         for combfuc in self.combfucs:
-            #t1 = time.time()
-            _dict = combfuc(queryobj, _dict)
-            #t2 = time.time()
-            #print combfuc,"time last", t2- t1
+            _dict = combfuc(queryobj, _dict, contexts)
             if not _dict:
                 return None
+
         #区分是一个list，还是单独的一个topic
         if type(_dict) is list:
             for tem_dict in _dict:
@@ -247,7 +249,7 @@ class TopicBase:
         return _dict
 
     #基础topic识别函数
-    def topicfuc(self, queryobj, justscore = False):
+    def topicfuc(self, queryobj, contexts=[[]], justscore = False):
 
         score1 = self.topicwordfuc(queryobj.rawtext)
         score2 = self.topicwordrefuc(queryobj.rawtext)
@@ -262,24 +264,51 @@ class TopicBase:
             #slots抽取
             slots = []
             for slotfuc in self.slotfucs:
-                #t1 = time.time()
                 slotresult = slotfuc(queryobj)
                 if slotresult:
                     slots.append(slotresult)
-                #t2 = time.time()
-                #print slotfuc ," Time last", t2-t1
-            return self.topicdict(queryobj, self.domain, queryobj.intent, topic_scores, slots)
+            slot_benefit_score = 0.1 if slots else 0.0
+            topic_scores.append(slot_benefit_score)
+            return self.topicdict(queryobj, self.domain, queryobj.intent, topic_scores, slots, contexts)
         return None
 
+    #针对所有的context进行更新
+    def contextupdate(self, queryobj, contexts, query_has_topic = False):
+        topics = []
+        searched_domains = set()
+        for contextid in range(len(contexts)):
+            context = contexts[contextid]
+            maxscore = max([topic.get("Score", 0.0) for topic in context])
+            lasttopicweight = 0.2 if contextid == 0 else 0.05
+            for lasttopic in context:
+                #只是保留最大分值一定范围(暂时0.1)的那些而已
+                if lasttopic.get("Score", 0.0) < maxscore - 0.2:
+                    continue
+                if lasttopic.get("Domain", "") in searched_domains:
+                    continue
+                searched_domains.add(lasttopic.get("Domain", ""))
+                topicobj = self.topicupdate(queryobj, lasttopic, lasttopicweight, query_has_topic)
+                if topicobj:
+                    if type(topicobj) is not list:
+                        topicobj = [ topicobj ]
+                    for t in topicobj:
+                        topics.append(t)
+                        print "\t lasttopic", lasttopic["Domain"], self.domain, t["Score"]
+        return topics
+
+
     #针对上一topic的特别识别方法
-    def topicupdate(self, queryobj, lasttopicdict, has_topic = False):
+    def topicupdate(self, queryobj, lasttopicdict, lasttopicweight = 0.2, has_topic = False):
         lasttopic_domain = lasttopicdict.get("Domain", "")
-        #当前topic识别对象必须在fatherdomains里面，才可以使用上一topic
-        #print lasttopic_domain, self.domain, "|".join(self.fatherdomains)
-        if not lasttopic_domain in self.fatherdomains:
+        if not lasttopic_domain:
             return None
-        #如果与上一意图的时间相隔太大，也不使用上一topic
-        if time.time() - lasttopicdict.get("_stamp", 0) > 1000:
+        #当前topic识别对象必须在fatherdomains里面，才可以使用上一topic
+        basedomain = "*" in self.fatherdomains
+        sondomain = lasttopic_domain in self.fatherdomains
+        if (not basedomain) and (not sondomain):
+            return None
+        #如果与上一意图的时间相隔太大5min，也不使用上一topic
+        if time.time() - lasttopicdict.get("_stamp", 0) > 300:
             return None
 
         slots = [lasttopicdict.get("Slots")]
@@ -290,25 +319,33 @@ class TopicBase:
                 slots.append(slotresult)
                 _slots.append(slotresult)
 
-        ##domain完全一致时，slot无变化，表明上一topic关联失败：
-        #if (not self.slotdiff([lasttopicdict.get("Slots")], _slots)) and lasttopic_domain == self.domain:
-        #    return None
+        #slot有无， slot有无更新 的 tag
+        has_slot_tag = True if _slots else False
+        has_diff_slot_tag = self.slotdiff([lasttopicdict.get("Slots")], _slots)
 
         #根据当前query与上一topic进行当前topic分值预估
-        newlasttopicscore = self.topicfuc(queryobj, True)
+        newlasttopicscore = self.topicfuc(queryobj, lasttopicdict, True)
         has_topic_score = 0.1 if not has_topic else 0.0
-        new_score = lasttopicdict.get("Score") * 0.5 + newlasttopicscore + has_topic_score
-        #print lasttopicdict.get("Score"), newlasttopicscore, has_topic_score
+
+        has_slot_score = 0.05 if has_slot_tag else 0.0
+        has_slot_score = 0.1 if has_slot_tag and not has_topic else has_slot_score
+        has_diff_slot_score = 0.05 if has_diff_slot_tag else 0.0
+        has_diff_slot_score = 0.1 if has_diff_slot_tag and not has_topic else has_diff_slot_score
+        new_score = lasttopicdict.get("Score") * lasttopicweight + newlasttopicscore + has_topic_score + has_slot_score + has_diff_slot_score
+
+        #如果是基础域，即score最大仅能为0.05
+        if basedomain:
+            new_score = min(new_score, 0.05 + new_score/100)
 
         #domain完全一致时，slot无变化，表明上一topic关联失败：
-        if (not self.slotdiff([lasttopicdict.get("Slots")], _slots)) and lasttopic_domain == self.domain and newlasttopicscore == 0.0 and queryobj.rawtext != lasttopicdict.get("Query", ""):
+        if (not has_slot_tag) and lasttopic_domain == self.domain and newlasttopicscore == 0.0:# and queryobj.rawtext != lasttopicdict.get("Query", ""):
             return None
 
         #domain不一致时，无法识别为当前domain，表明上一topic关联失败
         if lasttopic_domain != self.domain and newlasttopicscore == 0.0:
             return None
 
-        return self.topicdict(queryobj, self.domain, queryobj.intent, [new_score], slots)
+        return self.topicdict(queryobj, self.domain, queryobj.intent, [new_score], slots, [[lasttopicdict]] )
 
 
 if __name__=="__main__":

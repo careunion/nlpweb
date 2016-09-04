@@ -12,7 +12,7 @@ import json
 pwd_path = data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".")
 
 #slot为空的是否要清空
-def CombNonslotclear(queryobj, topic_obj=None):
+def CombNonslotclear(queryobj, topic_obj=None, contexts = [[]]):
     if not topic_obj:
         return None
     if type(topic_obj) is dict:
@@ -25,7 +25,7 @@ def CombNonslotclear(queryobj, topic_obj=None):
     return new_topic_obj 
 
 #slot结果重组
-def Combrestruct(queyrobj, topic_dict=None):
+def Combrestruct(queyrobj, topic_dict=None, contexts = [[]] ):
     if not topic_dict:
         return None
     if type(topic_dict) is not dict:
@@ -52,7 +52,7 @@ def Combrestruct(queyrobj, topic_dict=None):
     #print json.dumps(domain_topics, ensure_ascii=False)
     topiclist = []
     for k,v in domain_topics.items():
-        v["Score"] = min(v.get("Score", 0.0) * 0.3, 0.5)
+        v["Score"] = min(v.get("Score", 0.0) * 0.3, 0.4)
         topiclist.append(v)
     #print json.dumps(topiclist, ensure_ascii=False)
     return sorted(topiclist, key=lambda x:x.get("Score", 0.0), reverse=True)
@@ -62,7 +62,7 @@ xiaoi_catg2id = {}
 for line in open(pwd_path + "/data/catg2id"):
     catgid, catgname = line.strip().decode("utf-8").split("\t")
     xiaoi_catg2id[catgname] = catgid
-def Combcatg2id(queryobj, topic_obj=None):
+def Combcatg2id(queryobj, topic_obj=None, contexts = [[]]):
     if not topic_obj:
         return None
     if type(topic_obj) is dict:
@@ -73,17 +73,6 @@ def Combcatg2id(queryobj, topic_obj=None):
         if catgid:
             topic_dict["categoryId"] = catgid
     return topic_obj
-
-#qa使用的句子
-def Combxiaoiqa(queryobj, topic_obj=None):
-    if not topic_obj:
-        return {"Suggestion":u"能服务"}#None
-    if type(topic_obj) is dict:
-        topic_obj = [topic_obj]
-    for topic_dict in topic_obj:
-        pass
-    return topic_obj
-
 
 
 if __name__=="__main__":

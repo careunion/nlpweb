@@ -31,15 +31,15 @@ def topn_has_topic_get(reqobj, requsers_obj):
     if reqobj.Uid in requsers_obj.requsers and requsers_obj.requsers[reqobj.Uid].context_topics:
         lasttopics = requsers_obj.requsers[reqobj.Uid].context_topics#[0]
 
-    if reqobj.Context_topic:
-        lasttopics = reqobj.Context_topic
-        lasttopics = [Ltopic(topic)._dict for topic in lasttopics]
+    #if reqobj.Context_topic:
+    #    lasttopics = reqobj.Context_topic
+    #    lasttopics = [Ltopic(topic)._dict for topic in lasttopics]
 
     #根据appid， query，上一个topic，获取当前topic信息
     topics = topicobj.main(query, reqobj.Appid, lasttopics) 
 
     #取topn
-    topics = sorted(topics, key=lambda x:x.get("Score", 0.0), reverse=True)[:reqobj.Topic_topn]
+    topics = sorted(topics, key=lambda x:x.get("Score", 0.0), reverse=True)#[:reqobj.Topic_topn]
     return topics
 
 class Ltopic:

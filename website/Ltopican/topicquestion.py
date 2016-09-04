@@ -57,10 +57,11 @@ class topicquestion:
         badpos = -1
 
         #判断用户说话方式
-        matchobj = re.search(self.rankidre, answer)
-        if matchobj:
-            ranksort = matchobj.groups()[0]
-            ranknum = matchobj.groups()[1]
+        matchobjs = re.findall(self.rankidre, answer)
+        if matchobjs:
+            matchobj = matchobjs[-1]
+            ranksort = matchobj[0]
+            ranknum = matchobj[1]
             if u"最后" in ranksort or u"倒数" in ranksort:
                 rankpos = -1
             else:
@@ -76,6 +77,7 @@ class topicquestion:
 
         else:            
             #不是第几个
+            answer = re.split(u"(还是|算了)", answer)[-1]
             issues_score = [self.setintersect(t, answer) for t in issues]
             if sum(issues_score) == 0.0:
                 return badpos
@@ -98,5 +100,5 @@ class topicquestion:
 
 if __name__=="__main__":
     obj = topicquestion()
-    print obj.main(u"撸串吧", u"你是要啤酒、烤串、还是什么")
+    print obj.main(u"啤酒，算了，烤串吧。哈哈。", u"你是要啤酒、烤串、还是什么")
 

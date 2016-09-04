@@ -2,11 +2,11 @@
 <catalog>
 	<apps>
 		<appname>xiaolan</appname>
-		<domainname>血糖,天气,训练计划</domainname>
+		<domainname>血糖,天气,训练计划,检索命令,提醒命令</domainname>
 	</apps>
 	<apps>
 		<appname>xiaoi</appname>
-		<domainname>基础交互,天气,商品,品牌,对讲机,智能手机,键盘,收音机,电脑,空调,电视机,油烟机,音响,数码相机,单反,遥控玩具,香水礼包,迷你香水,男士香水,香水走珠,女士香水,爽肤水,乳液,面膜,精华露,面霜,洁面,防晒,粉底遮瑕,卸妆水,睫毛膏,腮红,眼影,唇膏唇彩,郁金香,玫瑰花,菊花,健身器材,雪纺,短裙,连衣裙,包臀裙,背带裙,套装裙,蛋糕裙,鱼尾裙,牛仔裤,长裤,镂空,短裤,修身牛仔,棒球衫,小脚裤,舞会正装,小礼服,旗袍,舞蹈服,仿皮皮衣,真皮皮衣,大码女装,毛呢大衣,大衣,风衣,皮衣,T恤,塑身衣,针织衫,卫衣,短外套,牛仔外套,针织开衫,果汁,啤酒,咖啡,茶,中式,日式,泰式,越式,韩式,自助餐,法式,意式,皮鞋,休闲鞋,平底鞋,高跟鞋,跑鞋,足球鞋,篮球鞋,男上装,男下装,裙类,女上装,女下装,男童装,女童装,羽绒服,大码T恤,毛衣,棉衣,内衣,马甲背心,羊绒衫,薄款棉衣,宾馆,电影院,美甲,健身,理发,医疗保健,清洁打扫,窗户,衣柜,鞋柜,镜子,艺术画,沙发,灯饰,写字台,床,时钟,婴儿车,冰箱,马桶,灶台,热水器,烤箱,花洒,洗手池,窗帘,挂画,植物,手表,戒指,项链,耳饰,佩饰,帽子,围巾,包,墨镜,节日挂饰,冰箱,马桶,灶台,热水器,烤箱,花洒,洗手池,衣柜,灯饰,圆领衬衫,纯色衬衫,商务衬衫,大码衬衫,格子衬衫,印花卫衣,运动卫衣,西服,牛仔裤,沙滩裤,马裤,纯色T恤,纯棉T恤,V领T恤,夹克,无袖夹克</domainname>
+		<domainname>基础交互,商品,品牌,对讲机,智能手机,键盘,收音机,电脑,空调,电视机,油烟机,音响,数码相机,单反,遥控玩具,香水礼包,迷你香水,男士香水,香水走珠,女士香水,爽肤水,乳液,面膜,精华露,面霜,洁面,防晒,粉底遮瑕,卸妆水,睫毛膏,腮红,眼影,唇膏唇彩,郁金香,玫瑰花,菊花,健身器材,雪纺,短裙,连衣裙,包臀裙,背带裙,套装裙,蛋糕裙,鱼尾裙,牛仔裤,长裤,镂空,短裤,修身牛仔,棒球衫,小脚裤,舞会正装,小礼服,旗袍,舞蹈服,仿皮皮衣,真皮皮衣,大码女装,毛呢大衣,大衣,风衣,皮衣,T恤,塑身衣,针织衫,卫衣,短外套,牛仔外套,针织开衫,果汁,啤酒,咖啡,茶,中式,日式,泰式,越式,韩式,自助餐,法式,意式,皮鞋,休闲鞋,平底鞋,高跟鞋,跑鞋,足球鞋,篮球鞋,男上装,男下装,裙类,女上装,女下装,男童装,女童装,羽绒服,大码T恤,毛衣,棉衣,内衣,马甲背心,羊绒衫,薄款棉衣,宾馆,电影院,美甲,健身,理发,医疗保健,清洁打扫,窗户,衣柜,鞋柜,镜子,艺术画,沙发,灯饰,写字台,床,时钟,婴儿车,冰箱,马桶,灶台,热水器,烤箱,花洒,洗手池,窗帘,挂画,植物,手表,戒指,项链,耳饰,佩饰,帽子,围巾,包,墨镜,节日挂饰,冰箱,马桶,灶台,热水器,烤箱,花洒,洗手池,衣柜,灯饰,圆领衬衫,纯色衬衫,商务衬衫,大码衬衫,格子衬衫,印花卫衣,运动卫衣,西服,牛仔裤,沙滩裤,马裤,纯色T恤,纯棉T恤,V领T恤,夹克,无袖夹克</domainname>
 	</apps>
 	
     <item>
@@ -18,8 +18,9 @@
     </item>  
 
     <item>
+        <fatherdomain>*</fatherdomain>
         <domain>基础交互</domain>
-        <slots>test</slots>
+        <slots>Slotdiscountfind,Slotpricefind,Slotattentionfind,Slotratingfind,Slotreputationfind,Slotdistancefind,Slotcouponfind</slots>
         <rulepath>conf/rules/基础交互</rulepath>
         <combines>Combxiaoiqa</combines>
         <shouldrank1domains>1</shouldrank1domains>
@@ -98,7 +99,7 @@
 		<domain>天气</domain>
 		<slots>Slotdatefind,Slotcityfind</slots>
 		<rulepath>conf/rules/weather</rulepath>
-		<combines>Combweather</combines>
+		<combines>#Combweather</combines>
 	</item>
 	<item>
 		<fatherdomain>商品,品牌</fatherdomain>
@@ -1128,4 +1129,15 @@
 		<rulepath>conf/rules/xiaoi/真皮皮衣</rulepath>
 		<combines>Combcatg2id,Combxiaoiqa</combines>
 	</item>
+
+    <item>
+        <domain>检索命令</domain>
+        <slots>Slotsearchfind</slots>
+        <rulepath>conf/rules/检索命令</rulepath>
+    </item>
+    <item>
+        <domain>提醒命令</domain>
+        <slots>Slotremindfind,Slottimefind</slots>
+        <rulepath>conf/rules/提醒命令</rulepath>
+    </item>
 </catalog>

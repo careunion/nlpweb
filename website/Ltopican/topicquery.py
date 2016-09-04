@@ -17,6 +17,7 @@ class topicquery:
             self.rawtext = self.rawtext.decode("utf-8")
         self.segtext = list(jieba.cut(query))
         self.postext = [list(k) for k in jieba.posseg.cut(query)]
+        self.hastopic = False
         self.lastquery = ""
         self.intent = ""
 

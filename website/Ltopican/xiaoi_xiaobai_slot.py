@@ -164,4 +164,6 @@ if __name__=="__main__":
     #print discount(u"三折到五折的商品")
     for line in sys.stdin:
         print Slotdiscountfind(line.strip().decode("utf-8"))
+        print Slotratingfind(line.strip().decode("utf-8"))
+        print Slotreputationfind(line.strip().decode("utf-8"))
 

@@ -14,6 +14,8 @@ import topicintent
 import json
 import sys
 import topicquestion
+import random
+import topicrobotask
 
 class TopicAnl:
     def __init__(self, conf_xml):
@@ -25,7 +27,10 @@ class TopicAnl:
 
         self.only_rank1_domains = set()
         self.unuseless_domains = set()
+        self.crosscontext_domains = set()
 
+        self.robotask_apps = set()
+        self.robotask_obj = topicquestion.topicquestion()
 
         self.conf_load(conf_xml)
         self.topic_gen()
@@ -44,6 +49,8 @@ class TopicAnl:
                 domainnames = app.getElementsByTagName("domainname")[0].firstChild.data.split(",")
             if username and domainnames:
                 self.appdomains[username] = domainnames
+            if app.getElementsByTagName("robotasktask"):
+                self.robotask_apps.add(username)
         #获取topic的信息
         items = root.getElementsByTagName("item")
         for item in items:
@@ -67,6 +74,8 @@ class TopicAnl:
                 self.only_rank1_domains.add(_dict["domain"])
             if item.getElementsByTagName("unuselessdomain"):
                 self.unuseless_domains.add(_dict["domain"])
+            if item.getElementsByTagName("crosscontextdomains"):
+                self.crosscontext_domains.add(_dict["domain"])
             self.conf.append(_dict)
     
     def topic_gen(self):
@@ -77,53 +86,50 @@ class TopicAnl:
     def topicscomb(self, topics):
         topics = sorted(topics, key=lambda x:x.get("Score", 0.0), reverse=True)
         comb_topics_dict = {}
+        #print "----------------------"
         for topic in topics:
             #print json.dumps(topic, ensure_ascii=False),"\n"
             domain = topic.get("Domain", "")
             if not comb_topics_dict.has_key(domain):
                 comb_topics_dict[domain] = {}
             oldtopic = comb_topics_dict[domain]
+            nulltopic = dict(oldtopic)
             for k,v in topic.items():
                 if k == "Score":
                     oldtopic[k] = min(oldtopic.get(k, 0.0) + v, 1.0)
                 elif type(v) is dict:
                     old_v = oldtopic.get(k, {})
-                    old_v.update(v)
-                    oldtopic[k] = old_v
-                elif not k in oldtopic:
+                    v.update(old_v)
+                    oldtopic[k] = v
+                elif k not in oldtopic and not nulltopic:
                     oldtopic[k] = v
 
         newtopics = [v for k,v in comb_topics_dict.items()]
                     
         return sorted(newtopics, key=lambda x:x.get("Score", 0.), reverse=False) 
 
-    def topicsfilter(self, lasttopic, topics):
+    def topicsfilter(self, topics, contexts):
         last_topic_score = -1.0
         max_topics_score = 0.0
 
         other_topics = []
-
-        for topic in topics:
-            if topic.get("Domain") == lasttopic.get("Domain"):
-                last_topic_score = topic.get("Score", 0.0)
-            else:
-                max_topics_score = max([max_topics_score, topic.get("Score", 0.0)])
-                other_topics.append(topic)
+        
+        #获取以前所有有效context意图的domain
+        context_domains = set()
+        for context in contexts:
+            for topic in context:
+                context_domains.add(topic.get("Domain"))
 
         all_topic_scores = [topic.get("Score", 0.0) for topic in topics]
         all_topic_scores.append(0)
         max_all_topic_score = max(all_topic_scores)
         
-        #print " ".join(list(self.only_rank1_domains))
-        #print max_topics_score, max_all_topic_score
         #用于过滤，某些必须处于rank1位置的domain，如果不处于rank1，直接过滤
-        topics = [topic for topic in topics if not( topic.get("Domain", "") in self.only_rank1_domains and topic.get("Score", 0.0) < max_all_topic_score)]
-        other_topics = [topic for topic in other_topics if not( topic.get("Domain", "") in self.only_rank1_domains and topic.get("Score", 0.0) < max_all_topic_score)]
+        topics = [topic for topic in topics if not ( topic.get("Domain", "") in self.only_rank1_domains and topic.get("Score", 0.0) < max_all_topic_score)]
+        #用于过滤，继承来的topic，但是不处于rank1的domain
+        topics = [topic for topic in topics if not ( topic.get("Domain", "") in context_domains and topic.get("Score", 0.0) < max_all_topic_score)]
 
-        if last_topic_score >= max_topics_score - 0.2:
-            return topics
-        else:
-            return other_topics
+        return sorted(topics, key=lambda x:x.get("Score", 0.), reverse=True)
 
     #如果topic是一个dict，表示是top1的topic，但是如果是list，表示是topn的topic
     def topicappend(self, topics, topic):
@@ -133,28 +139,34 @@ class TopicAnl:
         else:
             topics.append(topic)
 
-    #获取上一topic，但是保证topic是有效的
-    def lastusefultopic(self, lasttopics):
-        for topic in lasttopics:
-            print json.dumps(topic, ensure_ascii=False)
-            domain = topic.get("Domain")
-            if domain not in self.unuseless_domains:
-                return topic
-        return {}
+    #获取所有有效的context信息，但是保证topic是有效的
+    #就是寻找上一个topic，以及可以跨context继承的domain
+    def usefulcontextsGen(self, contexts):
+        usefulcontexts = []
+        sensecontexts = []
+
+        for contextid in range(len(contexts)):
+            context = contexts[contextid]
+            newcontext1 = [ topic for topic in context if topic.get("Domain", "") not in self.unuseless_domains]
+            newcontext2 = [ topic for index, topic in enumerate(newcontext1) if topic.get("Domain", "") in self.crosscontext_domains or (index == 0 and not usefulcontexts)]
+            if newcontext1:
+                sensecontexts.append(newcontext1)
+            if newcontext2:
+                usefulcontexts.append(newcontext2)
+        #print json.dumps(usefulcontexts, ensure_ascii=False)
+        return sensecontexts, usefulcontexts 
 
 
     #主函数, 用于分析Topic的识别（包含对上一topic的处理），最后返回一个topiclist
-    def main(self, query, appname, lasttopicdicts = []):
+    def topicmain(self, query, appname, usefulcontexts = []):
         queryobj = topicquery.topicquery(query)
         topics = []
         #无意图，则考虑以前的topic要加权
         query_has_topic = self.topicexsitedobj.judge(queryobj)
+        queryobj.hastopic = query_has_topic
 
         #获取query的intent
         queryobj.intent = self.topicexsitedobj.intenttype(queryobj)
-
-        #上一有效意图获取
-        lasttopicdict = self.lastusefultopic(lasttopicdicts)
 
         #app平台级别用户意图
         topicobjs = []
@@ -167,23 +179,40 @@ class TopicAnl:
             topicobjs = self.topicobjs
 
         stt1 = time.time()
+        domaintimes = []
         #遍历意图
         for topicobj in topicobjs:
             #查看是否根据上一意图是否需要更新
             st1 = time.time()
-            topic = topicobj.topicupdate(queryobj, lasttopicdict, query_has_topic)
+            topic = topicobj.contextupdate(queryobj, usefulcontexts, query_has_topic)
+            st2 = time.time()
             #如果不是上一意图对象，则直接获取topic
             if not topic:
-                topic = topicobj.topicfuc(queryobj)
+                topic = topicobj.topicfuc(queryobj, usefulcontexts)
+                
             #添加topic
             if topic:
                 self.topicappend(topics, topic)
-            st2 = time.time()
-            #print "Domain", topicobj.domain, "Last", st2-st1
+            #domaintimes.append((st2-st1, "Domain", topicobj.domain, "Last"))
         topics = self.topicscomb(topics)
         stt2 = time.time()
         print "time Last", stt2 - stt1
-        return self.topicsfilter(lasttopicdict, topics)
+        return self.topicsfilter(topics, usefulcontexts)
+
+    def main(self, query, appname, contexts = []):
+        #对context进行筛选，选择可以继承的context
+        sensecontexts, usefulcontexts = self.usefulcontextsGen(contexts)
+
+        if appname in self.robotask_apps:
+            topicrobotask.robotaskpre(query, appname, self.robotask_obj, self.robotask_apps, sensecontexts, usefulcontexts)
+
+        alltopics = self.topicmain(query, appname, usefulcontexts)
+
+        if appname in self.robotask_apps:
+            topicrobotask.robottaskpost(query, appname, self.robotask_apps, alltopics, usefulcontexts)
+
+        return alltopics
+
 
 
 

@@ -53,9 +53,9 @@ class Lreq:
 
 
     #添加当前识别信息
-    def append(self, topic):
+    def append(self, topics):
         self.Context_text.append(self.Raw_text)
-        self.Context_topic.append(topic)
+        self.Context_topic.append(topics)
 
 
 class Appusers:
@@ -91,8 +91,8 @@ class Requser:
         if text:
             self.context_texts = text
 
-    def append(self, text, topic):
-        self.context_topics.insert(0, topic)
+    def append(self, text, topics):
+        self.context_topics.insert(0, topics)
         self.context_texts.insert(0, text)
         self.context_topics = self.context_topics[:5]
         self.context_texts = self.context_texts[:5]

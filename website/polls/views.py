@@ -66,14 +66,14 @@ def api(req):
 
         #context信息更新，不过只有在有具体topic情况下，才更新用户个人context
         if topn_topics:
-            req_obj.append(topn_topics[0])
+            req_obj.append(topn_topics)
             requsers_obj.append(req_obj)
         
         requsers_obj.save()
 
         logger.debug("topn_topics:" + json.dumps(topn_topics, ensure_ascii=False))
         logger.debug("topn_simtexts:" + json.dumps(topn_simtexts, ensure_ascii=False))
-        return HttpResponse(GoodResp(req_obj, topn_topics, topn_simtexts), content_type="application/json")
+        return HttpResponse(GoodResp(req_obj, topn_topics[:req_obj.Topic_topn], topn_simtexts), content_type="application/json")
     else:
         return HttpResponse(BadResp(-1) , content_type="application/json")
 

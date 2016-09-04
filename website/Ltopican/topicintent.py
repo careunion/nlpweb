@@ -16,7 +16,7 @@ class topicintent:
     def judge(self, queryobj):
         postext = queryobj.postext
         poslist = [t[1] for t in postext]
-        if "n" in poslist or "v" in poslist or "r" in poslist or "vn" in poslist:
+        if "n" in poslist or "r" in poslist or "vn" in poslist:
             return True
         return False
     
