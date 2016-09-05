@@ -88,7 +88,7 @@ class TopicAnl:
         comb_topics_dict = {}
         #print "----------------------"
         for topic in topics:
-            #print json.dumps(topic, ensure_ascii=False),"\n"
+            print json.dumps(topic, ensure_ascii=False),"\n"
             domain = topic.get("Domain", "")
             if not comb_topics_dict.has_key(domain):
                 comb_topics_dict[domain] = {}

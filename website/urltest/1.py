@@ -11,7 +11,7 @@ import urllib2
 import json
 
 test_data = {"Appid":"xiaolan","Skey":"sldkjgklds","Uid":"gdkds",
-"Raw_text":"我想要搜索一下脖子运动",
+"Raw_text":"提醒十二点二十分给我",
 #"Robot_question":"你要选长春吗",
 "Topic_topn":2,"Simtext_topn":2,\
         "Word_set":[

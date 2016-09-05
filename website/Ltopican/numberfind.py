@@ -33,6 +33,8 @@ class NumberFind:
             if len(nums) > 1:
                 upper = self.numbertrans(nums[0])
                 lower = self.numbertrans(nums[1])
+                if upper == 0:
+                    upper = 1
                 return upper * common_used_numerals[cn_num] + lower
                 
         numcn_len = len(numcn)
@@ -69,3 +71,4 @@ class NumberFind:
                 aft_num = self.numbertrans(num_cns[1])
                 num_list.append( str(pre_num) + "." + str(aft_num) )
         return num_list
+

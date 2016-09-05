@@ -23,6 +23,7 @@ from topiccombs_xiaoiqa import *
 from xiaoi_gdk_slot_v3 import *
 from slotfuc_weathercity import *
 from xiaolan_gdk_slot import *
+from xiaolan_xiaobai_time_slot import * 
 
 pwd_path = data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".")
 
@@ -41,6 +42,9 @@ class TopicBase:
         #fatherdomains默认包含自己domain
         self.fatherdomains = set(confobj.get("fatherdomain", "").split(","))
         self.fatherdomains.add(self.domain)
+
+        #slot降权分数
+        self.none_slot_weight  = 0.8
 
         self.topicword = {}
         self.topicwordre = {}
@@ -268,6 +272,9 @@ class TopicBase:
                 if slotresult:
                     slots.append(slotresult)
             slot_benefit_score = 0.1 if slots else 0.0
+            #slot-有无-调权:无slot，则降权值
+            if not slots:
+                topic_scores = [score * self.none_slot_weight for score in topic_scores]
             topic_scores.append(slot_benefit_score)
             return self.topicdict(queryobj, self.domain, queryobj.intent, topic_scores, slots, contexts)
         return None
@@ -325,6 +332,8 @@ class TopicBase:
 
         #根据当前query与上一topic进行当前topic分值预估
         newlasttopicscore = self.topicfuc(queryobj, lasttopicdict, True)
+        if not has_slot_tag:
+            newlasttopicscore = newlasttopicscore * self.none_slot_weight
         has_topic_score = 0.1 if not has_topic else 0.0
 
         has_slot_score = 0.05 if has_slot_tag else 0.0

@@ -114,12 +114,6 @@ def Slotremindfind(queryobj):
     query = xiaoLanGdkSlotobj.checkInput(queryobj)
     return xiaoLanGdkSlotobj.main(query,'RemindKeyText')
 
-def Slottimefind(queryobj):
-    """
-        抽取提醒信息。
-    """
-    query = xiaoLanGdkSlotobj.checkInput(queryobj)
-    return None
 
 #if __name__=="__main__":
 #    for line in sys.stdin:
